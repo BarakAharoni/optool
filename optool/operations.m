@@ -265,6 +265,13 @@ BOOL removeLoadEntryFromBinary(NSMutableData *binary, struct thin_header macho, 
             case LC_LOAD_DYLIB: {
                 
                 struct dylib_command command = *(struct dylib_command *)(binary.bytes + binary.currentOffset);
+
+                // validate name's range offset is in binary bounds
+                if (binary.currentOffset + command.cmdsize > binary.length) {
+                    LOG("Command at offset %lu is out of binary bounds", binary.currentOffset);
+                    break;
+                }
+
                 char *name = (char *)[[binary subdataWithRange:NSMakeRange(binary.currentOffset + command.dylib.name.offset, command.cmdsize - command.dylib.name.offset)] bytes];
                 if ([@(name) isEqualToString:payload] && removedOrdinal == -1) {
                     LOG("removing payload from %s...", LC(cmd));
